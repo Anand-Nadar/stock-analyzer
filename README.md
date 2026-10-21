@@ -88,6 +88,8 @@ python -m stockpilot backtest --oos-from 2025-06-01 --min-score 65 --max-hold 15
 `load-index` records each company's industry as its sector (used for sector exposure and peer P/E), so you rarely need `import-sectors`.
 Backtest flags: `--min-score --atr-mult --max-hold --max-positions --min-rr --risk-pct --cost-pct --capital`.
 `backtest --regime-filter` only allows new trades while the Nifty is above its 200-day average. `backtest-analysis` breaks the latest backtest down by exit type, score bucket, setup and year, and shows costs and a 95% range for the average R-multiple (is the edge distinguishable from zero?).
+`backtest --breakout-only` ignores near-breakout (buy-stop) setups; the same switch for live screening is `STOCKPILOT_BREAKOUT_ONLY=1`.
+`momentum-backtest` tests a slow strategy: each month hold the strongest N stocks by 12-1 month return (`--top-n --lookback --skip --regime-filter`), compared with holding all the stocks equally and with the Nifty; it also lists today's top picks. Survivorship bias is especially strong for this test (today's index members are past winners).
 Every setting you tune because it looked better in-sample is curve-fitting: pick settings on the in-sample period, then check the out-of-sample period once.
 
 ## Settings

@@ -38,6 +38,7 @@ class Settings:
     min_risk_reward: float = 1.5
     max_stop_distance_pct: float = 8.0
     atr_stop_multiple: float = 2.0
+    breakout_only: bool = field(default_factory=lambda: _env("BREAKOUT_ONLY", False, lambda v: v.lower() in ("1", "true", "yes")))
     min_score: float = 55.0
     # Rough all-in round-trip cost (brokerage, STT, exchange/DP charges, slippage) as % of trade value.
     # This is an ASSUMPTION - set it from your own broker's contract note.

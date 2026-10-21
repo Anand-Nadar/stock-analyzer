@@ -171,7 +171,8 @@ def cmd_backtest(a):
     overrides = {k: v for k, v in {
         "min_score": a.min_score, "atr_stop_multiple": a.atr_mult, "bt_max_hold_days": a.max_hold,
         "bt_max_positions": a.max_positions, "risk_pct_per_trade": a.risk_pct, "round_trip_cost_pct": a.cost_pct,
-        "min_risk_reward": a.min_rr, "capital": a.capital}.items() if v is not None}
+        "min_risk_reward": a.min_rr, "capital": a.capital,
+        "breakout_only": True if a.breakout_only else None}.items() if v is not None}
     cfg = replace(SETTINGS, **overrides)
     if overrides:
         print(f"Settings overridden for this run: {overrides}")
@@ -226,6 +227,32 @@ def cmd_bt_analysis(a):
         for n in an["notes"]:
             print("  !", n)
     print("\nIf higher score buckets do not show a higher avg R, the score is not predictive.")
+
+
+def cmd_momentum(a):
+    from dataclasses import replace
+    from .momentum import run_and_store_momentum, MOMENTUM_LIMITATIONS
+    cfg = replace(SETTINGS, **({"capital": a.capital} if a.capital else {}), **({"round_trip_cost_pct": a.cost_pct} if a.cost_pct is not None else {}))
+    with db.session() as conn:
+        rep = run_and_store_momentum(conn, cfg, a.start, a.end, a.oos_from, a.top_n, a.lookback, a.skip, a.regime_filter)
+    picks = rep.pop("_picks")
+    cols = list(rep)
+    keys = ["total_return_pct", "cagr_pct", "max_drawdown_pct", "sharpe_rf0", "avg_exposure_pct", "turnover_x", "costs_paid",
+            "positions_opened", "benchmark_return_pct", "benchmark_max_drawdown_pct"]
+    print(f"{'metric':<28}" + "".join(f"{c:>30}" for c in cols))
+    print(f"{'period':<28}" + "".join(f"{(rep[c]['start'] or '-') + '..' + (rep[c]['end'] or '-'):>30}" for c in cols))
+    for k in keys:
+        print(f"{k:<28}" + "".join(f"{str(rep[c]['metrics'].get(k, '-')):>30}" for c in cols))
+    print("\nReturn by calendar year (%):")
+    years = sorted({y for c in cols for y in rep[c]["metrics"].get("returns_by_year_pct", {})})
+    print(f"{'year':<28}" + "".join(f"{c:>30}" for c in cols))
+    for y in years:
+        print(f"{y:<28}" + "".join(f"{str(rep[c]['metrics'].get('returns_by_year_pct', {}).get(y, '-')):>30}" for c in cols))
+    print(f"\nCurrent top {a.top_n} by momentum as of {picks['as_of']} (12-1 month return %): {picks['picks']}")
+    print("\nLimitations:")
+    for l in MOMENTUM_LIMITATIONS:
+        print(" -", l)
+    print("Compare 'momentum' with 'equal_weight_all' (same stocks, no ranking) and with the benchmark. Saved to backtest_runs.")
 
 
 def cmd_paper_open(a):
@@ -404,6 +431,11 @@ def main(argv=None):
     s.add_argument("--min-rr", type=float, help=f"min net risk/reward (default {SETTINGS.min_risk_reward})")
     s.add_argument("--risk-pct", type=float); s.add_argument("--cost-pct", type=float); s.add_argument("--capital", type=float)
     s.add_argument("--regime-filter", action="store_true", help="only enter while the Nifty is above its 200-day average")
+    s.add_argument("--breakout-only", action="store_true", help="ignore near-breakout (buy-stop) setups")
+    s = add("momentum-backtest", cmd_momentum, "monthly rotation into the strongest N stocks (low turnover) vs equal-weight and the Nifty")
+    s.add_argument("--start"); s.add_argument("--end"); s.add_argument("--oos-from")
+    s.add_argument("--top-n", type=int, default=10); s.add_argument("--lookback", type=int, default=252); s.add_argument("--skip", type=int, default=21)
+    s.add_argument("--regime-filter", action="store_true"); s.add_argument("--capital", type=float); s.add_argument("--cost-pct", type=float)
     s = add("backtest-analysis", cmd_bt_analysis, "break the latest backtest down by score, setup, exit type, year")
     s.add_argument("--run-id", type=int)
     s = add("paper-open", cmd_paper_open, "open a paper trade from the latest swing run")

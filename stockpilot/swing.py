@@ -126,6 +126,8 @@ def evaluate_prepared(symbol: str, d: pd.DataFrame, b60: float | None, s: Settin
     # ---------------- hard gates ----------------
     if setup == "NONE":
         res["rejections"].append("no breakout / near-breakout setup")
+    if setup == "NEAR_BREAKOUT" and s.breakout_only:
+        res["rejections"].append("near-breakout (buy-stop) setups excluded by breakout_only")
     if close < s.min_price:
         res["rejections"].append(f"price below Rs {s.min_price:.0f}")
     if med_tv < s.min_median_traded_value:

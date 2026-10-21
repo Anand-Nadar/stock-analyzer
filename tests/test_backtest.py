@@ -104,3 +104,15 @@ def test_trades_record_costs_and_analysis_runs():
     assert all(abs((t["gross_pnl"] - t["costs"]) - t["pnl"]) < 0.02 for t in res["trades"])
     an = analyze_trades(res["trades"])
     assert an["overall"]["n"] == len(res["trades"]) and set(an["by_exit"]) <= {"STOP", "TARGET", "TIME", "PERIOD_END"}
+
+
+def test_breakout_only_excludes_near_breakouts():
+    import test_swing as ts
+    from stockpilot.swing import evaluate_swing
+    df = ts._series(breakout=False)
+    df.iloc[-1, df.columns.get_loc("close")] = df["high"].iloc[-21:-1].max() * 0.99        # just under the ceiling
+    df.iloc[-1, df.columns.get_loc("high")] = df["close"].iloc[-1] + 1
+    r_off = evaluate_swing("T", df, None, Settings(capital=300_000))
+    r_on = evaluate_swing("T", df, None, Settings(capital=300_000, breakout_only=True))
+    if r_off.get("setup") == "NEAR_BREAKOUT":
+        assert any("breakout_only" in x for x in r_on["rejections"]) and not r_on["qualifies"]
