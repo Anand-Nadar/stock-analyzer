@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}{{ facts.symbol }} &mdash; StockPilot{% endblock %}
+{% block body %}
+<div class="card"><pre>{{ report }}</pre></div>
+<p class="muted">For an AI-written narrative with automatic number checks run <code>python -m stockpilot research {{ facts.symbol }} --ai</code> (needs Ollama).</p>
+{% endblock %}

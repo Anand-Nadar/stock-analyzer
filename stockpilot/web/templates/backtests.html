@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="card">
+  <h2>Recent backtests</h2>
+  {% if not runs %}<p class="muted">None yet. Run <code>python -m stockpilot backtest --oos-from 2025-06-01</code>.</p>{% else %}
+  <table>
+    <tr><th>#</th><th>Run</th><th>Strategy</th><th>Period</th><th>Trades</th><th>Return</th><th>Max DD</th><th>Win rate</th><th>Profit factor</th><th>Benchmark</th></tr>
+    {% for r in runs %}
+    <tr><td>{{ r.id }}</td><td>{{ r.run_at }}</td><td>{{ r.strategy }}</td><td>{{ r.config.start }} &rarr; {{ r.config.end }}</td>
+      <td>{{ r.metrics.get('trades', '-') }}</td><td>{{ r.metrics.get('total_return_pct', '-') }}%</td><td>{{ r.metrics.get('max_drawdown_pct', '-') }}%</td>
+      <td>{{ r.metrics.get('win_rate_pct', '-') }}%</td><td>{{ r.metrics.get('profit_factor', '-') }}</td><td>{{ r.metrics.get('benchmark_return_pct', '-') }}%</td></tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Costs assumed: {{ runs[0].costs }}. Universe is today's survivors (survivorship bias); dividends excluded. Few trades = weak evidence.</p>
+  {% endif %}
+</div>
+{% endblock %}

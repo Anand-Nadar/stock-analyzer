@@ -1,0 +1,4 @@
+symbol,period_end,period_type,revenue,operating_profit,ebitda,interest_expense,net_profit,total_assets,total_liabilities,current_liabilities,total_debt,equity,cash,operating_cash_flow,shares_outstanding,source
+EXAMPLE,2023-03-31,A,10000,2000,2500,150,1200,15000,8000,3000,4000,7000,800,1500,50,annual report FY23
+EXAMPLE,2024-03-31,A,11500,2300,2850,160,1450,17000,8800,3300,4200,8200,900,1700,50,annual report FY24
+EXAMPLE,2025-03-31,A,13000,2600,3200,170,1700,19000,9500,3600,4300,9500,1100,2000,50,annual report FY25

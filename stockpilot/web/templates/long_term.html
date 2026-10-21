@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="card">
+  <h2>Long-term candidates {% if run %}<span class="muted">(run #{{ run.id }}, prices as of {{ run.data_as_of }})</span>{% endif %}</h2>
+  {% if not run %}
+    <p class="muted">No run yet. Import financials, then run <code>python -m stockpilot screen-long</code>.</p>
+  {% else %}
+    <p class="muted">Candidates are worth <em>researching</em>. Governance (pledging, auditor remarks, related-party dealings) is not assessed.</p>
+    <table>
+      <tr><th>Symbol</th><th>Status</th><th>Score</th><th>Confidence</th><th>Pillars (points / weight)</th><th>Flags</th></tr>
+      {% for r in run.results if r.status != 'NO_DATA' %}
+      <tr>
+        <td><a href="/stock/{{ r.symbol }}"><strong>{{ r.symbol }}</strong></a></td>
+        <td class="{{ 'ok' if r.status == 'CANDIDATE' else 'warn' if r.status.startswith('WATCH') else 'muted' }}">{{ r.status }}</td>
+        <td>{{ r.score }}</td><td>{{ r.confidence }}</td>
+        <td>{% for k, v in r.pillars.items() %}{{ k }} {{ v.points if v.points is not none else 'n/a' }}/{{ v.weight }}{% if not loop.last %} &middot; {% endif %}{% endfor %}</td>
+        <td class="bad">{{ r.serious_flags | join('; ') }}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="muted">No stocks have financial statements yet.</td></tr>{% endfor %}
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block body %}
+{% if failed %}
+<div class="card"><h2 class="bad">Failed updates (last 2 days)</h2>
+  {% for f in failed %}<div>{{ f.run_at }} &middot; <strong>{{ f.task }}</strong> <span class="muted">{{ f.details }}</span></div>{% endfor %}
+</div>
+{% endif %}
+<div class="card">
+  <h2>Data freshness</h2>
+  {% if fresh.latest_date %}
+    Latest price date: <strong>{{ fresh.latest_date }}</strong>
+    ({{ fresh.stale_days }} day(s) ago) &middot; {{ fresh.symbols_with_data }}/{{ fresh.symbols_tracked }} symbols have data
+    {% if fresh.symbols_stale %}<p class="warn">Stale: {{ fresh.symbols_stale | join(', ') }}</p>{% endif %}
+    {% if fresh.symbols_missing %}<p class="warn">No data: {{ fresh.symbols_missing | join(', ') }}</p>{% endif %}
+  {% else %}
+    <span class="warn">No price data yet.</span> Run <code>python -m stockpilot download-prices</code>.
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Swing candidates {% if run %}<span class="muted">(run #{{ run.id }}, data as of {{ run.data_as_of }})</span>{% endif %}</h2>
+  {% if not run %}
+    <p class="muted">No screening run yet. Run <code>python -m stockpilot screen-swing</code>.</p>
+  {% elif not run.candidates %}
+    <p class="muted">No stock passed every gate. That is a valid outcome.</p>
+  {% else %}
+  <table>
+    <tr><th>Symbol</th><th>Score</th><th>Setup</th><th>Entry</th><th>Stop</th><th>Target</th><th>Net R:R</th><th>Qty</th><th>Max loss</th></tr>
+    {% for r in run.candidates %}
+    <tr>
+      <td><a href="/stock/{{ r.symbol }}"><strong>{{ r.symbol }}</strong></a></td><td>{{ r.score }}</td><td>{{ r.setup }}</td>
+      <td>{{ r.plan.entry }}</td><td>{{ r.plan.stop_loss }}</td><td>{{ r.plan.target }}</td>
+      <td>{{ r.plan.net_risk_reward }}</td><td>{{ r.plan.position.quantity }}</td><td>&#8377;{{ "{:,.0f}".format(r.plan.position.risk_at_stop) }}</td>
+    </tr>
+    <tr><td colspan="9" class="muted">{% for k, c in r.components.items() %}{{ k }}: {{ c.points|round(0)|int }}/{{ c.max }} ({{ c.detail }}){% if not loop.last %} &middot; {% endif %}{% endfor %}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Recent data updates</h2>
+  {% for l in log %}<div>{{ l.run_at }} &middot; {{ l.task }} &middot;
+    <span class="{{ 'ok' if l.status == 'OK' else 'warn' }}">{{ l.status }}</span> <span class="muted">{{ l.details }}</span></div>
+  {% else %}<span class="muted">Nothing logged yet.</span>{% endfor %}
+</div>
+{% endblock %}

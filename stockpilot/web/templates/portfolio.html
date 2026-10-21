@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="card">
+  <h2>Holdings</h2>
+  {% if not pf.positions %}<p class="muted">No holdings. Record trades with <code>python -m stockpilot buy SYMBOL --qty N --price P</code>.</p>{% else %}
+  <table>
+    <tr><th>Symbol</th><th>Sector</th><th>Qty</th><th>Avg cost</th><th>Last</th><th>Value</th><th>Unrealized</th><th>Weight</th></tr>
+    {% for p in pf.positions %}
+    <tr><td><a href="/stock/{{ p.symbol }}">{{ p.symbol }}</a></td><td>{{ p.sector }}</td><td>{{ p.quantity }}</td><td>{{ p.avg_cost }}</td><td>{{ p.price }}</td>
+      <td>&#8377;{{ "{:,.0f}".format(p.value or p.cost) }}</td>
+      <td class="{{ 'ok' if (p.unrealized_pnl or 0) >= 0 else 'bad' }}">{{ p.unrealized_pnl }} ({{ p.unrealized_pct }}%)</td><td>{{ p.weight_pct }}%</td></tr>
+    {% endfor %}
+  </table>
+  <p>Value &#8377;{{ "{:,.0f}".format(pf.total_value) }} &middot; cost &#8377;{{ "{:,.0f}".format(pf.total_cost) }} &middot;
+     unrealized &#8377;{{ "{:,.0f}".format(pf.unrealized_pnl) }} &middot; realized &#8377;{{ "{:,.0f}".format(pf.realized_pnl) }} <span class="muted">(taxes not calculated)</span></p>
+  <p class="muted">Sector exposure: {% for k, v in pf.sector_pct.items() %}{{ k }} {{ v }}%{% if not loop.last %} &middot; {% endif %}{% endfor %}</p>
+  {% for w in pf.warnings %}<div class="warn">! {{ w }}</div>{% endfor %}
+  {% endif %}
+</div>
+<div class="card">
+  <h2>Paper trades</h2>
+  {% if not paper.trades %}<p class="muted">None yet. Use <code>python -m stockpilot paper-open SYMBOL</code> on a BREAKOUT candidate.</p>{% else %}
+  <table>
+    <tr><th>#</th><th>Symbol</th><th>Status</th><th>Opened</th><th>Entry</th><th>Stop</th><th>Target</th><th>Qty</th><th>Mark / exit</th><th>Net P&amp;L</th></tr>
+    {% for t in paper.trades %}
+    <tr><td>{{ t.id }}</td><td>{{ t.symbol }}</td><td>{{ t.status }}</td><td>{{ t.opened_at }}</td><td>{{ t.entry }}</td><td>{{ t.stop }}</td><td>{{ t.target }}</td>
+      <td>{{ t.qty }}</td><td>{{ t.mark_or_exit }}</td><td class="{{ 'ok' if t.net_pnl >= 0 else 'bad' }}">&#8377;{{ "{:,.0f}".format(t.net_pnl) }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Closed: {{ paper.closed }} &middot; win rate {{ paper.win_rate_pct }}% &middot; closed net P&amp;L &#8377;{{ "{:,.0f}".format(paper.closed_net_pnl) }}</p>
+  {% endif %}
+</div>
+{% endblock %}
